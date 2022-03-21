@@ -64,8 +64,8 @@ local function ParseMDL(open, name)
     end
 
     local Found = {}
-    local FCount = 0
     do
+        local FCount = 0
         -- We grabbed all of the material names from the mdl
         -- Now were grabbing all of the directories --
         -- Keep in mind that the directories dont match the amount of material names --
@@ -92,7 +92,11 @@ local function ParseMDL(open, name)
 
                 --[[
                     local full = (PathWithMats .. dir .. Names[i]):Trim()
-                    if file_Exists(full, "Game") then
+                    if file_Exists(full .. ".vmt", "GAME") then
+                        FCount = FCount + 1
+                        Found[FCount] = full
+                    end
+                    if file_Exists(full .. ".vtf", "GAME") then
                         FCount = FCount + 1
                         Found[FCount] = full
                     end
@@ -168,9 +172,11 @@ do
     end
 end
 
-
-print("\n---------------------------------------------------\n")
-PrintTable(CachedMaterials)
-print("Before: " .. Before)
-print("After: " .. table.Count(CachedMaterials))
-print("Materials for removal: " .. Before - table.Count(CachedMaterials))
+print("\n---------------------------------------------------")
+print("-- Materials to be removed --\n")
+for k in pairs(CachedMaterials) do
+    print(k)
+end
+print("\n")
+print("Total Materials: " .. Before)
+print("Materials for removal: " .. table.Count(CachedMaterials))
