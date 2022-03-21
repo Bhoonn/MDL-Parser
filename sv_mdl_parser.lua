@@ -18,7 +18,7 @@ local file_Open = file.Open
 local file_Exists = file.Exists
 local PathWithMats = Path .. "materials/"
 
-local function ReadString(file)
+local function ReadName(file)
     local str = ""
     while true do
         local char = file:Read(1)
@@ -26,14 +26,21 @@ local function ReadString(file)
             break
         end
 
-        -- If it's a \ then change it to /
-        if char == "\\" then
-            str = str .. "/"
+        str = str .. char
+    end
 
-            continue
+    return str
+end
+
+local function ReadDir(file)
+    local str = ""
+    while true do
+        local char = file:Read(1)
+        if char:byte() == 0 or file:EndOfFile() then
+            break
         end
 
-        str = str .. char
+        str = str .. (char == "\\" and "/" or char)
     end
 
     return str
@@ -51,7 +58,7 @@ local function ParseMDL(open, name)
         open:Seek( Offset + ( 64 * ( i - 1 ) ) )
         open:Skip( open:ReadLong() - 4 )
 
-        Names[i] = ReadString(open)
+        Names[i] = ReadName(open)
     end
 
     open:Seek(SeekPos2)
@@ -85,7 +92,7 @@ local function ParseMDL(open, name)
             end
             open:Seek(ints[i])
 
-            local dir = ReadString(open)
+            local dir = ReadDir(open)
             for i = 1, Count do
                 FCount = FCount + 1
                 Found[FCount] = (PathWithMats .. dir .. Names[i]):Trim():lower()
