@@ -84,7 +84,10 @@ local function ParseMDL(file, name)
     
     for i = 1, Count do
         file:Seek( Offset + ( 64 * ( i - 1 ) ) )
-        file:Skip( file:ReadLong() - 4 )
+        local NameOffset = file:ReadLong()
+        if not NameOffset then continue end
+
+        file:Skip( NameOffset - 4 )
 
         Names[i] = ReadName(file)
     end
@@ -122,6 +125,8 @@ local function ParseMDL(file, name)
 
             local dir = ReadDir(file)
             for i = 1, Count do
+                if not Names[i] then continue end
+                
                 FCount = FCount + 1
                 local full = (dir .. Names[i]):Trim():lower()
                 Found[FCount] = PathWithMats .. full
