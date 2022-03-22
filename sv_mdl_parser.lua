@@ -92,13 +92,13 @@ local function ParseMDL(open, name)
             end
             open:Seek(ints[i])
 
-            local dir = ReadDir(open)
+            local dir = PathWithMats .. ReadDir(open)
             for i = 1, Count do
                 FCount = FCount + 1
-                Found[FCount] = (PathWithMats .. dir .. Names[i]):Trim():lower()
+                Found[FCount] = (dir .. Names[i]):Trim():lower()
 
                 --[[
-                    local full = (PathWithMats .. dir .. Names[i]):Trim()
+                    local full = (dir .. Names[i]):Trim()
                     if file_Exists(full .. ".vmt", "GAME") then
                         FCount = FCount + 1
                         Found[FCount] = full
