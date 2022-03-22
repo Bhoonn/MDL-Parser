@@ -9,3 +9,8 @@ Or you can manually remove every single material printed out yourself
 Any icons or materials that are not related to a model, they will be printed out aswell
 This only works for materials and models related to eachother in this folder
 Any models that use the materials in that folder but are outside the folder, will cause those materials to be printed out (for removal)
+
+Before use:
+
+MAKE SURE TO CREATE A BACKUP FOR THE CONTENT FOLDER
+IT IS NOT YET TESTED IN ANY LARGE SCALE AND COULD BE BROKEN
