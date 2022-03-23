@@ -46,32 +46,35 @@ local function ReadDir(file)
     return str
 end
 
--- We need this function for grabbing any additional textures the vtf/vmt might be using
-local function GetTextures(path)
-    local Mat = Material(path .. ".vmt")
+
+local function AddToTexturesTable(path)
+    Textures_Count = Textures_Count + 1
+    Textures[Textures_Count] = path
+end
+
+local function GetTextures(original)
+    local Mat = Material(original .. ".vmt")
 
     local basetexture = Mat:GetTexture("$basetexture")
     if basetexture and not basetexture:IsErrorTexture() then
-        basetexture = basetexture:GetName()
-    else
-        basetexture = nil
+        local path = PathWithMats .. basetexture:GetName()
+        AddToTexturesTable(path)
+        GetTextures(path)
     end
 
     local bumpmat = Mat:GetTexture("$bumpmap")
     if bumpmat and not bumpmat:IsErrorTexture() then
-        bumpmat = bumpmat:GetName()
-    else
-        bumpmat = nil
+        local path = PathWithMats .. bumpmat:GetName()
+        AddToTexturesTable(path)
+        GetTextures(path)
     end
 
     local envmapmask = Mat:GetTexture("$envmapmask")
     if envmapmask and not envmapmask:IsErrorTexture() then
-        envmapmask = envmapmask:GetName()
-    else
-        envmapmask = nil
+        local path = PathWithMats .. envmapmask:GetName()
+        AddToTexturesTable(path)
+        GetTextures(path)
     end
-    
-    return basetexture, bumpmat, envmapmask
 end
 
 local ModelsCache = {}
@@ -84,65 +87,51 @@ local function ParseMDL(file, name)
     
     for i = 1, Count do
         file:Seek( Offset + ( 64 * ( i - 1 ) ) )
+
         local NameOffset = file:ReadLong()
-        if not NameOffset then continue end
+        if NameOffset then
+            file:Skip( NameOffset - 4 )
 
-        file:Skip( NameOffset - 4 )
-
-        Names[i] = ReadName(file)
+            Names[i] = ReadName(file)
+        end
     end
 
     file:Seek(SeekPos2)
     local Dir_Count = file:ReadLong()
-    local Dir_Offset = file:ReadLong()
-    file:Seek(Dir_Offset)
+    file:Seek(file:ReadLong())
     local ints = {}
     for i = 1, Dir_Count do
         ints[i] = file:ReadLong()
     end
 
+    -- We grabbed all of the material names from the mdl
+    -- Now were grabbing all of the directories --
+    -- Keep in mind that the directories dont match the amount of material names --
+    -- So you have to store a string for each material name with that directory --
+    -- Then use that string to remove a key from the CachedMaterials table --
+    -- Then printing out the entire CachedMaterials table will give out all of the materials that need to be removed --
+    -- It's probably a good idea to put a file.Exists in there to check if that material actually exists --
+    -- But its kinda pointless to do because it just slows down the entire compilation, unless you actually need to be 100% accurate with the mdl materials --
     local Found = {}
     local FCount = 0
-    do
-        -- We grabbed all of the material names from the mdl
-        -- Now were grabbing all of the directories --
-        -- Keep in mind that the directories dont match the amount of material names --
-        -- So you have to store a string for each material name with that directory --
-        -- Then use that string to remove a key from the CachedMaterials table --
-        -- Then printing out the entire CachedMaterials table will give out all of the materials that need to be removed --
-        -- It's probably a good idea to put a file.Exists in there to check if that material actually exists --
-        -- But its kinda pointless to do because it just slows down the entire compilation, unless you actually need to be 100% accurate with the mdl materials --
-        for i = 1, Dir_Count do
-            if not ints[i] then
-                --[[
-                    Couldn't read the directory for this material --
-                    In HLMV it has a problem reading the directory too because of missing VMT --
-                    Not sure if related
-                ]]
-                break
-            end
+    for i = 1, Dir_Count do
+        if ints[i] then
             file:Seek(ints[i])
 
             local dir = ReadDir(file)
             for i = 1, Count do
-                if not Names[i] then continue end
-                
-                FCount = FCount + 1
-                local full = (dir .. Names[i]):Trim():lower()
-                Found[FCount] = PathWithMats .. full
+                if Names[i] then
+                    local full = (dir .. Names[i]):Trim():lower()
+                    FCount = FCount + 1
+                    Found[FCount] = PathWithMats .. full
 
-                local bt, bm, emm = GetTextures(full)
-                if bt then
-                    FCount = FCount + 1
-                    Found[FCount] = PathWithMats .. bt
-                end
-                if bm then
-                    FCount = FCount + 1
-                    Found[FCount] = PathWithMats .. bm
-                end
-                if emm then
-                    FCount = FCount + 1
-                    Found[FCount] = PathWithMats .. emm
+                    Textures = {}
+                    Textures_Count = 0
+                    GetTextures(full)
+                    for i = 1, Textures_Count do
+                        FCount = FCount + 1
+                        Found[FCount] = Textures[i]
+                    end
                 end
             end
         end
@@ -190,17 +179,13 @@ local function IterMats(files, folders, str)
 end
 
 local function SearchBoth()
-    do
-        -- Iterate over mdl files in given path --
-        local mdl_files, mdl_folders = file_Find(Path .. "models/*", "GAME")
-        IterMDLS(mdl_files, mdl_folders, Path .. "models/")
-    end
-
-    do
-        -- Iterate over material files in given path --
-        local mat_files, mat_folders = file_Find(PathWithMats .. "*", "GAME")
-        IterMats(mat_files, mat_folders, PathWithMats)
-    end
+    -- Iterate over mdl files in given path --
+    local mdl_files, mdl_folders = file_Find(Path .. "models/*", "GAME")
+    IterMDLS(mdl_files, mdl_folders, Path .. "models/")
+    
+    -- Iterate over material files in given path --
+    local mat_files, mat_folders = file_Find(PathWithMats .. "*", "GAME")
+    IterMats(mat_files, mat_folders, PathWithMats)
 end
 
 SearchBoth()
