@@ -199,6 +199,8 @@ concommand.Add("bh_mdlparse", function(ply, cmd, args)
 		return
 	end
 
+    ModelsCache = {}
+    CachedMaterials = {}
 	Path = "addons/" .. foldername
 	PathWithMats = "addons/" .. foldername .. "/materials/"
 
