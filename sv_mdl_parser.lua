@@ -1,13 +1,7 @@
 if CLIENT then return end
 
--- WARNING: THIS ONLY WORKS FOR CONTENT FOLDERS THAT HAVE CONTENT ONLY RELATED TO CONTENT INSIDE OF THAT FOLDER --
--- ANY CONTENT THAT IS USED OUTSIDE BUT IS INSIDE THIS FOLDER WILL BE PRINTED OUT --
--- WARNING2: THIS SCRIPT IS MEANT FOR REMOVING MATERIALS FOR MODELS (MDL FILES), ANY KINDS OF ICONS AND OTHER MATERIALS THEY WILL BE PRINTED OUT --
-local Path = "addons/content_folder_name/"
-
-
--- END OF CONFIG (ANYTHING BELOW THIS LINE IS PURELY CODE AND SHOULDNT BE TOUCHED) --
-
+local Path
+local PathWithMats
 
 -- SeekPos1 is used for grabbing the names of the materials
 -- SeekPos2 is used for grabbing the directories of the materials
@@ -16,7 +10,7 @@ local SeekPos2 = 4 * 3 + 64 + 4 + 12 * 6 + 4 * 15
 local file_Find = file.Find
 local file_Open = file.Open
 local file_Exists = file.Exists
-local PathWithMats = Path .. "materials/"
+
 
 local function ReadName(file)
     local str = ""
@@ -46,7 +40,8 @@ local function ReadDir(file)
     return str
 end
 
-
+local Textures = {}
+local Textures_Count = 0
 local function AddToTexturesTable(path)
     Textures_Count = Textures_Count + 1
     Textures[Textures_Count] = path
@@ -87,7 +82,7 @@ local function ParseMDL(file, name)
 
     local Offset = file:ReadLong()
 	if not Offset then return end
-	
+
     for i = 1, Count do
         file:Seek( Offset + ( 64 * ( i - 1 ) ) )
 
@@ -183,29 +178,47 @@ end
 
 local function SearchBoth()
     -- Iterate over mdl files in given path --
-    local mdl_files, mdl_folders = file_Find(Path .. "models/*", "GAME")
-    IterMDLS(mdl_files, mdl_folders, Path .. "models/")
+    local files, folders = file_Find(Path .. "models/*", "GAME")
+    IterMDLS(files, folders, Path .. "models/")
     
     -- Iterate over material files in given path --
-    local mat_files, mat_folders = file_Find(PathWithMats .. "*", "GAME")
-    IterMats(mat_files, mat_folders, PathWithMats)
+    local files, folders = file_Find(PathWithMats .. "*", "GAME")
+    IterMats(files, folders, PathWithMats)
 end
 
-SearchBoth()
+concommand.Add("bh_mdlparse", function(ply, cmd, args)
+	if IsValid(ply) then return end
+	if not args[1] then
+		print("please enter the folder name")
+		return
+	end
 
-local Before = table.Count(CachedMaterials)
-for k,v in pairs(ModelsCache) do
-    local v1 = v[1]
-    for i = 1, v[2] do
-        CachedMaterials[v1[i]] = nil
-    end
-end
+	local foldername = tostring(args[1])
+	if not foldername then
+		print("please enter the folder name")
+		return
+	end
 
-print("\n---------------------------------------------------")
-print("-- Materials to be removed --\n")
-for k in pairs(CachedMaterials) do
-    print(k)
-end
-print("\n")
-print("Total Materials: " .. Before)
-print("Materials for removal: " .. table.Count(CachedMaterials))
+	Path = "addons/" .. foldername .. "/"
+	PathWithMats = "addons/" .. foldername .. "/materials/"
+
+	print("Loading materials for removal...")
+	SearchBoth()
+
+	local Before = table.Count(CachedMaterials)
+	for k,v in pairs(ModelsCache) do
+		local v1 = v[1]
+		for i = 1, v[2] do
+			CachedMaterials[v1[i]] = nil
+		end
+	end
+
+	print("\n---------------------------------------------------")
+	print("-- Materials to be removed --\n")
+	for k in pairs(CachedMaterials) do
+		print(k)
+	end
+	print("\n")
+	print("Total Materials: " .. Before)
+	print("Materials for removal: " .. table.Count(CachedMaterials))
+end)
