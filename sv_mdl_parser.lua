@@ -178,12 +178,12 @@ end
 
 local function SearchBoth()
     -- Iterate over mdl files in given path --
-    local files, folders = file_Find(Path .. "models/*", "GAME")
-    IterMDLS(files, folders, Path .. "models/")
+    local files, folders = file_Find(Path .. "/models/*", "GAME")
+    IterMDLS(files, folders, Path .. "/models/")
     
     -- Iterate over material files in given path --
-    local files, folders = file_Find(PathWithMats .. "*", "GAME")
-    IterMats(files, folders, PathWithMats)
+    local files, folders = file_Find(PathWithMats .. "/*", "GAME")
+    IterMats(files, folders, PathWithMats .. "/")
 end
 
 concommand.Add("bh_mdlparse", function(ply, cmd, args)
@@ -199,8 +199,8 @@ concommand.Add("bh_mdlparse", function(ply, cmd, args)
 		return
 	end
 
-	Path = "addons/" .. foldername .. "/"
-	PathWithMats = "addons/" .. foldername .. "/materials/"
+	Path = "addons/" .. foldername
+	PathWithMats = "addons/" .. foldername .. "/materials"
 
 	print("Loading materials for removal...")
 	SearchBoth()
