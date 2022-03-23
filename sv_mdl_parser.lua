@@ -83,8 +83,11 @@ local function ParseMDL(file, name)
 
     file:Seek(SeekPos1)
     local Count = file:ReadLong()
+	if not Count then return end
+
     local Offset = file:ReadLong()
-    
+	if not Offset then return end
+	
     for i = 1, Count do
         file:Seek( Offset + ( 64 * ( i - 1 ) ) )
 
