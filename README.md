@@ -5,9 +5,7 @@ It works by getting all of the materials in that folder caching them, then it wi
 
 After this the system will look and see which materials are left over that those mdl files dont need
 
-It will print them out in console, now you can use any script outside of lua to remove all of those materials
-
-Or you can manually remove every single material printed out yourself
+It will print them out in console, now you can use the file_remover.py script to remove all of those materials
 
 -- HOW TO USE --
 Run the bh_mdlparse console command in your server console with the folder name like (bh_mdlparse "content_one")
